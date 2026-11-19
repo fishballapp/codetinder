@@ -1,0 +1,74 @@
+---
+import dashLeft from '@codetinder/ui/plates/dash-left.webp';
+import dashRight from '@codetinder/ui/plates/dash-right.webp';
+import { CandyHearts } from '../components/CandyHearts';
+import { ComingSoon } from '../components/ComingSoon';
+import { DemoLoop } from '../components/DemoLoop';
+import { HowItWorks } from '../components/HowItWorks';
+import { SiteFooter } from '../components/SiteFooter';
+import SiteHeader from '../components/SiteHeader.astro';
+import WaitlistCard from '../components/WaitlistCard.astro';
+import WinStatement from '../components/WinStatement.astro';
+import Layout from '../layouts/Layout.astro';
+
+const lead =
+  'Your agents write more code than you can read. CodeTinder picks a little of it from every merge request and tries small changes, one at a time. Swipe right on the ones you love, and your agents learn your type.';
+const description =
+  'Swipe on small code changes to teach your agents your taste. Join the CodeTinder waitlist.';
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'CodeTinder',
+  url: 'https://codetinder.dev/',
+  description,
+  applicationCategory: 'DeveloperApplication',
+  award: [
+    'Best Supervised Agent, GitLab Transcend hackathon "Life After Code"',
+    'Most Creative, GitLab Transcend hackathon "Life After Code"',
+  ],
+};
+---
+
+<Layout title="CodeTinder: swipe for the love of code" description={description} structuredData={structuredData}>
+  <div class="relative bg-[radial-gradient(120%_70rem_at_50%_0%,var(--blush-light),var(--blush)_70%)]">
+    <SiteHeader />
+
+    <section
+      class="relative mx-auto max-w-[96rem] px-[clamp(1rem,3vw,3rem)] pb-[clamp(1rem,2vw,2rem)] max-[75rem]:[--corner-candy:clamp(4.5rem,14vw,7rem)]"
+      aria-labelledby="landing-headline"
+    >
+      <CandyHearts />
+
+      {/* The two candies that stay sit above the headline, in room kept for them. */}
+      <div class="relative grid justify-items-center pt-[clamp(1.5rem,2.5vw,2.5rem)] text-center max-[75rem]:pt-[calc(var(--corner-candy)_*_1.05)]">
+        <h1
+          id="landing-headline"
+          class="font-display text-[clamp(3rem,1rem_+_4.3vw,6rem)] font-bold leading-[1.02] tracking-[-0.02em] text-balance text-candy-red text-shadow-emboss"
+        >
+          Swipe for the love of code.
+        </h1>
+        <div class="mt-[clamp(1rem,1.5vw,1.5rem)] flex items-center gap-5">
+          <img class="w-11 flex-none max-sm:hidden" src={dashLeft.src} alt="" />
+          <p class="max-w-[60ch] text-[clamp(1.15rem,0.95rem_+_0.6vw,1.6rem)] font-semibold leading-[1.4] text-balance text-wine">
+            {lead}
+          </p>
+          <img class="w-11 flex-none max-sm:hidden last:self-start" src={dashRight.src} alt="" />
+        </div>
+        <WaitlistCard />
+        <WinStatement />
+      </div>
+
+      <div id="demo" class="scroll-mt-6">
+        <DemoLoop client:load />
+        <p class="mt-[clamp(1.25rem,2vw,1.75rem)] text-center text-[1rem] font-semibold text-wine">
+          This demo uses sample data and connects to nothing.
+        </p>
+      </div>
+    </section>
+
+    <HowItWorks />
+    <ComingSoon />
+    <SiteFooter />
+  </div>
+</Layout>

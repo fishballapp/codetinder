@@ -1,0 +1,32 @@
+# node / pnpm
+node_modules
+.pnpm-store
+*.tsbuildinfo
+
+# editor / OS
+.DS_Store
+.idea
+.claude/*
+.agents/*
+
+# secrets / env
+.env
+.env.*
+!.env.schema
+!.env.example
+
+# local-only working files, never committed
+*.local
+*.local.*
+*.local/
+
+# build / scratch
+dist
+tmp
+# Astro's generated types
+.astro
+
+# impeccable's per-project working state
+.impeccable/*
+# full-size image masters; the site ships WebP copies of them
+assets/plates

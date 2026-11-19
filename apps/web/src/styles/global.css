@@ -1,0 +1,16 @@
+/*
+ * The app's stylesheet: Tailwind, the shared design world, and what only the app needs.
+ * Components style themselves with utilities.
+ */
+@import "tailwindcss";
+@import "@codetinder/ui/theme.css";
+/* Tailwind skips node_modules, so the shared package's classes are found by path. */
+@source "../../../../packages/ui/src";
+
+@layer base {
+  /* Base UI: popups portal to the body, above the app's own stacking contexts; iOS needs the body
+     positioned for a backdrop to cover the whole visual viewport. */
+  #root {
+    isolation: isolate;
+  }
+}

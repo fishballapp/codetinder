@@ -1,0 +1,37 @@
+{
+  "name": "@codetinder/site",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --host 127.0.0.1 --port 5174",
+    "build": "astro build",
+    "preview": "astro preview --host 127.0.0.1 --port 5174",
+    "check": "astro check && node scripts/check-routes.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@base-ui/react": "catalog:",
+    "@codetinder/api": "workspace:*",
+    "@codetinder/core": "workspace:*",
+    "@codetinder/ui": "workspace:*",
+    "@phosphor-icons/react": "catalog:",
+    "react": "catalog:web",
+    "react-dom": "catalog:web"
+  },
+  "devDependencies": {
+    "@astrojs/check": "catalog:",
+    "@astrojs/react": "catalog:",
+    "@astrojs/sitemap": "catalog:",
+    "@internal/marketing": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:web",
+    "@types/react-dom": "catalog:web",
+    "astro": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:ts6",
+    "vitest": "catalog:"
+  }
+}

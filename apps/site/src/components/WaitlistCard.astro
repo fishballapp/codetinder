@@ -1,0 +1,25 @@
+---
+import { HourglassMediumIcon } from '@phosphor-icons/react';
+import { WaitlistForm } from './WaitlistForm';
+---
+
+<!-- The page's one action: what's true today, then the form. -->
+<section
+  id="join"
+  aria-labelledby="join-title"
+  class="relative mt-[clamp(1.5rem,2.5vw,2.25rem)] w-full max-w-[40rem] scroll-mt-6 rounded-[2rem] bg-card p-[clamp(1.25rem,3vw,2rem)] text-left text-ink shadow-lift"
+>
+  <p
+    class="inline-flex items-center gap-[0.4rem] rounded-pill border border-petal bg-petal-wash px-3 py-1 text-[0.95rem] font-semibold text-wine"
+  >
+    <HourglassMediumIcon weight="fill" aria-hidden="true" className="size-4 text-lipstick" />
+    Not open yet
+  </p>
+  <h2
+    id="join-title"
+    class="mt-3 text-balance font-display text-[clamp(1.6rem,1.3rem_+_1vw,2.1rem)] font-bold leading-[1.1] text-candy-red"
+  >
+    Coming soon to GitHub and GitLab
+  </h2>
+  <WaitlistForm client:load />
+</section>

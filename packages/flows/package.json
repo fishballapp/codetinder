@@ -1,0 +1,25 @@
+{
+  "name": "@codetinder/flows",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "check:effect": "effect-tsgo diagnostics --project tsconfig.json --format text"
+  },
+  "dependencies": {
+    "@codetinder/gitlab": "workspace:*",
+    "@effect/platform-node": "catalog:",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@codetinder/core": "workspace:*",
+    "@effect/vitest": "catalog:",
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "vitest": "catalog:",
+    "yaml": "catalog:"
+  }
+}

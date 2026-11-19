@@ -1,0 +1,35 @@
+---
+import heartNoElse from '@codetinder/ui/plates/heart-no-else.webp';
+import SiteHeader from '../components/SiteHeader.astro';
+import { SiteFooter } from '../components/SiteFooter';
+import { WaitlistLink } from '../components/WaitlistLink';
+import Layout from '../layouts/Layout.astro';
+---
+
+<!-- Every path the site doesn't have lands here, with status 404, including the earlier product's rounds and project pages. -->
+<Layout
+  title="Page not found · CodeTinder"
+  description="This CodeTinder page couldn't be found."
+>
+  <div class="relative bg-[radial-gradient(120%_70rem_at_50%_0%,var(--blush-light),var(--blush)_70%)]">
+    <SiteHeader />
+    <main class="mx-auto grid max-w-[44rem] justify-items-center px-[clamp(1rem,3vw,3rem)] pt-[clamp(2rem,6vw,5rem)] text-center">
+      <img
+        src={heartNoElse.src}
+        alt=""
+        class="w-[clamp(8rem,6rem_+_6vw,12rem)] rotate-[-6deg] animate-candy-float motion-reduce:animate-none"
+      />
+      <h1 class="mt-5 text-balance font-display text-[clamp(2.5rem,1.25rem_+_3.5vw,4.5rem)] font-bold leading-[1.04] tracking-[-0.02em] text-candy-red text-shadow-emboss">
+        No match here.
+      </h1>
+      <p class="mt-4 max-w-[44ch] text-balance text-[clamp(1.15rem,0.95rem_+_0.6vw,1.5rem)] font-semibold leading-[1.4] text-wine">
+        This page isn't here anymore. CodeTinder isn't open yet.
+      </p>
+      <WaitlistLink className="mt-8 gap-[0.6rem] px-10 py-4 text-[1.3rem]" />
+      <a href="/#demo" class="mt-5 text-[1.05rem] font-semibold text-wine underline">
+        Try the demo
+      </a>
+    </main>
+    <SiteFooter />
+  </div>
+</Layout>

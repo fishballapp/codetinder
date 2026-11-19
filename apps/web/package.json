@@ -1,0 +1,38 @@
+{
+  "name": "@codetinder/web",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "test": "vitest run",
+    "check:effect": "effect-tsgo diagnostics --project tsconfig.json --format text"
+  },
+  "dependencies": {
+    "@base-ui/react": "catalog:",
+    "@codetinder/api": "workspace:*",
+    "@codetinder/core": "workspace:*",
+    "@codetinder/gitlab": "workspace:*",
+    "@codetinder/ui": "workspace:*",
+    "@effect/atom-react": "catalog:",
+    "@phosphor-icons/react": "catalog:",
+    "@tanstack/react-router": "catalog:",
+    "effect": "catalog:",
+    "react": "catalog:web",
+    "react-dom": "catalog:web"
+  },
+  "devDependencies": {
+    "@effect/vitest": "catalog:",
+    "@tailwindcss/vite": "catalog:",
+    "@tanstack/router-plugin": "catalog:",
+    "@types/react": "catalog:web",
+    "@types/react-dom": "catalog:web",
+    "@vitejs/plugin-react": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

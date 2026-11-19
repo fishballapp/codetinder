@@ -1,0 +1,31 @@
+{
+  "name": "@codetinder/worker-web",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "codetinder.dev's one Worker (codetinder-web): the marketing site as static assets and, at /api/waitlist, the waitlist in D1.",
+  "scripts": {
+    "dev": "node scripts/assemble-assets.ts --allow-missing && wrangler d1 migrations apply codetinder --local && wrangler dev --port ${CODETINDER_WORKER_PORT:-8791} --inspector-port ${CODETINDER_WORKER_INSPECTOR_PORT:-9241}",
+    "build": "pnpm -F @codetinder/site build && node scripts/assemble-assets.ts",
+    "deploy": "varlock run -- node scripts/deploy-worker.ts",
+    "cf-typegen": "wrangler types",
+    "test": "vitest run",
+    "check:effect": "effect-tsgo diagnostics --project tsconfig.wrangler.json --format text"
+  },
+  "dependencies": {
+    "@codetinder/api": "workspace:*",
+    "@effect/sql-d1": "catalog:",
+    "@internal/effect-worker": "workspace:*",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@baymutt/varlock-plugin": "catalog:",
+    "@effect/vitest": "catalog:",
+    "@internal/effect-api": "workspace:*",
+    "@types/node": "catalog:",
+    "varlock": "catalog:",
+    "vitest": "catalog:",
+    "wrangler": "catalog:"
+  }
+}

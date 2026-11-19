@@ -1,0 +1,25 @@
+{
+  "name": "@codetinder/api",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./waitlist": "./src/waitlist.ts",
+    "./waitlist-form": "./src/waitlist-form.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "check:effect": "effect-tsgo diagnostics --project tsconfig.json --format text"
+  },
+  "dependencies": {
+    "@codetinder/core": "workspace:*",
+    "@internal/effect-api": "workspace:*",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@effect/vitest": "catalog:",
+    "vitest": "catalog:"
+  }
+}

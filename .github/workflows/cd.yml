@@ -1,0 +1,42 @@
+name: CD
+
+# Every push to main runs every gate (ci.yml), then deploys codetinder.dev. This is the only path to
+# production, so what is live is always a commit on this branch.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    name: Gates
+    uses: ./.github/workflows/ci.yml
+
+  # The site is built, then one `varlock run` loads the deploy's secrets, applies the D1 migrations
+  # and deploys the Worker (apps/worker-web). BAYMUTT_KEY, a secret of the `production` environment
+  # that only main can deploy to, is a service account that reads the one environment those secrets
+  # are in. They load once, before the migration.
+  deploy:
+    name: Deploy codetinder.dev
+    needs: gates
+    runs-on: ubuntu-latest
+    environment: production
+    # A hung wrangler call would otherwise hold the deploy group for the 360m default.
+    timeout-minutes: 15
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    env:
+      BAYMUTT_KEY: ${{ secrets.BAYMUTT_KEY }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build, apply D1 migrations, deploy the Worker
+        run: pnpm -F @codetinder/worker-web run deploy

@@ -1,0 +1,646 @@
+# CodeTinder's Duo flow: a thin shell. Every step but the agent's is `flow-steps`, downloaded from
+# codetinder.dev at the start of each run, so its logic ships with each deploy.
+# The session page shows each agent's tool calls and any step that fails; every run ends in
+# `session_summary`, which shows what the run did in plain words. The agents' JSON answers stay off
+# the page: flow-steps reads them, and the summary says what came of them.
+version: "v1"
+environment: ambient
+components:
+  # Prints `generate`, `learn` or `sweep`. Its stderr goes to a file: the router matches the whole
+  # output.
+  # The download retries a stalled transfer, all within the step's 120 s.
+  - name: "route"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "mkdir -p /tmp/codetinder && curl -fsS --connect-timeout 10 --max-time 25 --retry 3 -o /tmp/codetinder/flow-steps.js https://codetinder.dev/flow-steps/v1.js && node /tmp/codetinder/flow-steps.js route 2>/tmp/codetinder/route.log"
+        as: "command"
+        literal: true
+  # Shows why routing failed in the session's log.
+  - name: "unrouted"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "cat /tmp/codetinder/route.log"
+        as: "command"
+        literal: true
+  # Writes the generate task to .codetinder/task.md.
+  - name: "generate_task"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js task generate"
+        as: "command"
+        literal: true
+  - name: "generate"
+    type: AgentComponent
+    prompt_id: "codetinder_task"
+    inputs:
+      - from: "context:generate_task.tool_responses"
+        as: "task_step"
+    toolset:
+      - "read_file"
+      - "read_files"
+      - "list_dir"
+      - "find_files"
+      - "grep"
+    ui_log_events:
+      - "on_tool_execution_success"
+  - name: "save_round_answer"
+    type: DeterministicStepComponent
+    tool_name: "create_file_with_contents"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "context:generate.final_answer"
+        as: "contents"
+      - from: ".codetinder/round-answer.json"
+        as: "file_path"
+        literal: true
+  # Verifies the answer, stores the round on codetinder.dev and posts the MR note, or prints
+  # `correct` when the agent's answer fails a check it can correct. Its stderr goes to a log the
+  # router can't see: `round_log` or `round_retry` prints it.
+  - name: "round"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js round --can-correct .codetinder/round-answer.json 2>>/tmp/codetinder/round.log"
+        as: "command"
+        literal: true
+      - from: "1800"
+        as: "timeout"
+        literal: true
+  - name: "round_log"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "cat /tmp/codetinder/round.log"
+        as: "command"
+        literal: true
+  # The one correction: the generate task again, with the rejected answer and why.
+  - name: "round_retry_task"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js task generate-retry 2>>/tmp/codetinder/round.log"
+        as: "command"
+        literal: true
+  - name: "generate_retry"
+    type: AgentComponent
+    prompt_id: "codetinder_task"
+    inputs:
+      - from: "context:round_retry_task.tool_responses"
+        as: "task_step"
+    toolset:
+      - "read_file"
+      - "read_files"
+      - "list_dir"
+      - "find_files"
+      - "grep"
+    ui_log_events:
+      - "on_tool_execution_success"
+  - name: "save_round_retry_answer"
+    type: DeterministicStepComponent
+    tool_name: "create_file_with_contents"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "context:generate_retry.final_answer"
+        as: "contents"
+      - from: ".codetinder/round-retry-answer.json"
+        as: "file_path"
+        literal: true
+  # The last try: ends the round either way.
+  - name: "round_retry"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js round .codetinder/round-retry-answer.json 2>>/tmp/codetinder/round.log; cat /tmp/codetinder/round.log"
+        as: "command"
+        literal: true
+      - from: "1800"
+        as: "timeout"
+        literal: true
+  # The learn branch. Its steps' stderr goes to a log the routers can't see; `propose` prints it.
+  - name: "learn_task"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js task learn 2>>/tmp/codetinder/learn.log"
+        as: "command"
+        literal: true
+  - name: "learn"
+    type: AgentComponent
+    prompt_id: "codetinder_task"
+    inputs:
+      - from: "context:learn_task.tool_responses"
+        as: "task_step"
+    toolset:
+      - "read_file"
+    ui_log_events:
+      - "on_tool_execution_success"
+  - name: "save_principles_answer"
+    type: DeterministicStepComponent
+    tool_name: "create_file_with_contents"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "context:learn.final_answer"
+        as: "contents"
+      - from: ".codetinder/principles-answer.json"
+        as: "file_path"
+        literal: true
+  # Writes the principles doc, which the rewrite then follows.
+  - name: "render"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js render .codetinder/principles-answer.json 2>>/tmp/codetinder/learn.log"
+        as: "command"
+        literal: true
+  - name: "rewrite_task"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js task rewrite 2>>/tmp/codetinder/learn.log"
+        as: "command"
+        literal: true
+  - name: "rewrite"
+    type: AgentComponent
+    prompt_id: "codetinder_rewrite"
+    inputs:
+      - from: "context:rewrite_task.tool_responses"
+        as: "task_step"
+    toolset:
+      - "read_file"
+      - "read_files"
+      - "list_dir"
+      - "find_files"
+      - "grep"
+      - "edit_file"
+    ui_log_events:
+      - "on_tool_execution_success"
+  - name: "save_rewrite_answer"
+    type: DeterministicStepComponent
+    tool_name: "create_file_with_contents"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "context:rewrite.final_answer"
+        as: "contents"
+      - from: ".codetinder/rewrite-answer.json"
+        as: "file_path"
+        literal: true
+  # Reverts what the rewrite may not change, then runs the tests: `verified` or `failed: …`.
+  - name: "verify"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js verify rewrite 2>>/tmp/codetinder/learn.log"
+        as: "command"
+        literal: true
+      - from: "1800"
+        as: "timeout"
+        literal: true
+  # One more try, handed the end of the failing output.
+  - name: "retry_task"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js task rewrite-retry 2>>/tmp/codetinder/learn.log"
+        as: "command"
+        literal: true
+  - name: "rewrite_retry"
+    type: AgentComponent
+    prompt_id: "codetinder_rewrite"
+    inputs:
+      - from: "context:retry_task.tool_responses"
+        as: "task_step"
+    toolset:
+      - "read_file"
+      - "read_files"
+      - "list_dir"
+      - "find_files"
+      - "grep"
+      - "edit_file"
+    ui_log_events:
+      - "on_tool_execution_success"
+  - name: "save_retry_answer"
+    type: DeterministicStepComponent
+    tool_name: "create_file_with_contents"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "context:rewrite_retry.final_answer"
+        as: "contents"
+      - from: ".codetinder/rewrite-retry-answer.json"
+        as: "file_path"
+        literal: true
+  - name: "verify_retry"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js verify rewrite 2>>/tmp/codetinder/learn.log"
+        as: "command"
+        literal: true
+      - from: "1800"
+        as: "timeout"
+        literal: true
+  # Ends every learn run: commits what it learned as the config says and replies in the Done thread.
+  - name: "propose"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js propose; cat /tmp/codetinder/learn.log 2>/dev/null"
+        as: "command"
+        literal: true
+  # The sweep branch, on the default branch. Its steps' stderr goes to a log `sweep_propose` prints.
+  - name: "sweep_task"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js task sweep 2>>/tmp/codetinder/sweep.log"
+        as: "command"
+        literal: true
+  - name: "sweep"
+    type: AgentComponent
+    prompt_id: "codetinder_task"
+    inputs:
+      - from: "context:sweep_task.tool_responses"
+        as: "task_step"
+    toolset:
+      - "read_file"
+      - "read_files"
+      - "list_dir"
+      - "find_files"
+      - "grep"
+    ui_log_events:
+      - "on_tool_execution_success"
+  - name: "save_sweep_answer"
+    type: DeterministicStepComponent
+    tool_name: "create_file_with_contents"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "context:sweep.final_answer"
+        as: "contents"
+      - from: ".codetinder/sweep-answer.json"
+        as: "file_path"
+        literal: true
+  # Keeps the first 20 functions the agent found: `picked`, or `clean` when none needs a rewrite,
+  # or `correct` when the agent's answer fails a check it can correct.
+  - name: "sweep_pick"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js sweep pick --can-correct .codetinder/sweep-answer.json 2>>/tmp/codetinder/sweep.log"
+        as: "command"
+        literal: true
+  # The one correction: the sweep task again, with the rejected answer and why.
+  - name: "sweep_pick_retry_task"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js task sweep-retry 2>>/tmp/codetinder/sweep.log"
+        as: "command"
+        literal: true
+  - name: "sweep_retry"
+    type: AgentComponent
+    prompt_id: "codetinder_task"
+    inputs:
+      - from: "context:sweep_pick_retry_task.tool_responses"
+        as: "task_step"
+    toolset:
+      - "read_file"
+      - "read_files"
+      - "list_dir"
+      - "find_files"
+      - "grep"
+    ui_log_events:
+      - "on_tool_execution_success"
+  - name: "save_sweep_pick_retry_answer"
+    type: DeterministicStepComponent
+    tool_name: "create_file_with_contents"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "context:sweep_retry.final_answer"
+        as: "contents"
+      - from: ".codetinder/sweep-retry-answer.json"
+        as: "file_path"
+        literal: true
+  # The last try: `picked`, `clean` or `failed: …`.
+  - name: "sweep_pick_retry"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js sweep pick .codetinder/sweep-retry-answer.json 2>>/tmp/codetinder/sweep.log"
+        as: "command"
+        literal: true
+  - name: "sweep_rewrite_task"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js task sweep-rewrite 2>>/tmp/codetinder/sweep.log"
+        as: "command"
+        literal: true
+  - name: "sweep_rewrite"
+    type: AgentComponent
+    prompt_id: "codetinder_rewrite"
+    inputs:
+      - from: "context:sweep_rewrite_task.tool_responses"
+        as: "task_step"
+    toolset:
+      - "read_file"
+      - "read_files"
+      - "list_dir"
+      - "find_files"
+      - "grep"
+      - "edit_file"
+    ui_log_events:
+      - "on_tool_execution_success"
+  - name: "save_sweep_rewrite_answer"
+    type: DeterministicStepComponent
+    tool_name: "create_file_with_contents"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "context:sweep_rewrite.final_answer"
+        as: "contents"
+      - from: ".codetinder/rewrite-answer.json"
+        as: "file_path"
+        literal: true
+  # Reverts what the rewrite may not change, then runs the tests: `verified` or `failed: …`.
+  - name: "sweep_verify"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js verify sweep 2>>/tmp/codetinder/sweep.log"
+        as: "command"
+        literal: true
+      - from: "1800"
+        as: "timeout"
+        literal: true
+  - name: "sweep_retry_task"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js task sweep-rewrite-retry 2>>/tmp/codetinder/sweep.log"
+        as: "command"
+        literal: true
+  - name: "sweep_rewrite_retry"
+    type: AgentComponent
+    prompt_id: "codetinder_rewrite"
+    inputs:
+      - from: "context:sweep_retry_task.tool_responses"
+        as: "task_step"
+    toolset:
+      - "read_file"
+      - "read_files"
+      - "list_dir"
+      - "find_files"
+      - "grep"
+      - "edit_file"
+    ui_log_events:
+      - "on_tool_execution_success"
+  - name: "save_sweep_retry_answer"
+    type: DeterministicStepComponent
+    tool_name: "create_file_with_contents"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "context:sweep_rewrite_retry.final_answer"
+        as: "contents"
+      - from: ".codetinder/rewrite-retry-answer.json"
+        as: "file_path"
+        literal: true
+  - name: "sweep_verify_retry"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js verify sweep 2>>/tmp/codetinder/sweep.log"
+        as: "command"
+        literal: true
+      - from: "1800"
+        as: "timeout"
+        literal: true
+  # Ends every sweep: opens its MR and finishes it on codetinder.dev, or gives the sweep up.
+  - name: "sweep_propose"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "node /tmp/codetinder/flow-steps.js sweep propose 2>>/tmp/codetinder/sweep.log; cat /tmp/codetinder/sweep.log 2>/dev/null"
+        as: "command"
+        literal: true
+  # Every run ends here: what it did, in the plain lines flow-steps logged, for the session page.
+  - name: "session_log"
+    type: DeterministicStepComponent
+    tool_name: "run_command"
+    ui_log_events: ["on_tool_execution_failed"]
+    inputs:
+      - from: "cat /tmp/codetinder/session.md 2>/dev/null || echo '- CodeTinder stopped before it could log what it did: the steps above say why.'"
+        as: "command"
+        literal: true
+  # Shows the log on the session page: an agent's final answer is the one entry the page renders as
+  # markdown, where a step's shows only its command and the start of its output.
+  - name: "session_summary"
+    type: AgentComponent
+    prompt_id: "codetinder_session_summary"
+    inputs:
+      - from: "context:session_log.tool_responses"
+        as: "session_log"
+    toolset:
+      - "read_file"
+    ui_log_events:
+      - "on_agent_final_answer"
+prompts:
+  - prompt_id: "codetinder_task"
+    name: "CodeTinder task"
+    unit_primitives: []
+    prompt_template:
+      system: |
+        You are CodeTinder's agent, working in a project's repository. Your task is in the file
+        `.codetinder/task.md`: read all of it with `read_file` (if it says there is more, keep
+        reading with `offset`) and do exactly what it asks. Don't edit any file. Your final
+        answer is only the JSON document the task asks for: no prose, no code fence.
+      user: |
+        {{task_step}}
+    params:
+      timeout: 300
+  - prompt_id: "codetinder_rewrite"
+    name: "CodeTinder rewrite"
+    unit_primitives: []
+    prompt_template:
+      system: |
+        You are CodeTinder's agent, working in a project's repository. Your task is in the file
+        `.codetinder/task.md`: read all of it with `read_file` (if it says there is more, keep
+        reading with `offset`) and do exactly what it asks. Change code only with
+        `edit_file`, and only in the files the task allows, changing nothing it doesn't call for.
+        The project must still compile afterwards: before you remove or rename anything, read the
+        files to find every use. Your final answer is only the JSON document the task asks for: no
+        prose, no code fence.
+      user: |
+        {{task_step}}
+    params:
+      timeout: 300
+  - prompt_id: "codetinder_session_summary"
+    name: "CodeTinder session summary"
+    unit_primitives: []
+    prompt_template:
+      system: |
+        You relay what a CodeTinder run did to the developer. The user message is a command's
+        output: its first line is `Exit code: …`, the rest a markdown list. Your final answer is
+        `**What CodeTinder did**`, a blank line, then that list word for word: add nothing, drop
+        nothing, reword nothing, and call no tool.
+      user: |
+        {{session_log}}
+    params:
+      timeout: 300
+routers:
+  - from: "route"
+    condition:
+      input: "context:route.tool_responses"
+      routes:
+        "Exit code: 0\ngenerate\n": "generate_task"
+        "Exit code: 0\nlearn\n": "learn_task"
+        "Exit code: 0\nsweep\n": "sweep_task"
+        "default_route": "unrouted"
+  - { from: "unrouted", to: "session_log" }
+  # The agent runs only on a task that was written; otherwise `round` reports that no answer came.
+  - from: "generate_task"
+    condition:
+      input: "context:generate_task.tool_responses"
+      routes:
+        "Exit code: 0\nwrote .codetinder/task.md\n": "generate"
+        "default_route": "round"
+  - { from: "generate", to: "save_round_answer" }
+  - { from: "save_round_answer", to: "round" }
+  # A rejected answer gets one correction; whatever comes of it, `round_retry` ends the round.
+  - from: "round"
+    condition:
+      input: "context:round.tool_responses"
+      routes:
+        "Exit code: 0\ncorrect\n": "round_retry_task"
+        "default_route": "round_log"
+  - { from: "round_log", to: "session_log" }
+  - from: "round_retry_task"
+    condition:
+      input: "context:round_retry_task.tool_responses"
+      routes:
+        "Exit code: 0\nwrote .codetinder/task.md\n": "generate_retry"
+        "default_route": "round_retry"
+  - { from: "generate_retry", to: "save_round_retry_answer" }
+  - { from: "save_round_retry_answer", to: "round_retry" }
+  - { from: "round_retry", to: "session_log" }
+  # Every learn step that can't go on hands over to `propose`, which says why in its note.
+  - from: "learn_task"
+    condition:
+      input: "context:learn_task.tool_responses"
+      routes:
+        "Exit code: 0\nwrote .codetinder/task.md\n": "learn"
+        "default_route": "propose"
+  - { from: "learn", to: "save_principles_answer" }
+  - { from: "save_principles_answer", to: "render" }
+  - from: "render"
+    condition:
+      input: "context:render.tool_responses"
+      routes:
+        "Exit code: 0\nrendered\n": "rewrite_task"
+        "default_route": "propose"
+  - from: "rewrite_task"
+    condition:
+      input: "context:rewrite_task.tool_responses"
+      routes:
+        "Exit code: 0\nwrote .codetinder/task.md\n": "rewrite"
+        "default_route": "propose"
+  - { from: "rewrite", to: "save_rewrite_answer" }
+  - { from: "save_rewrite_answer", to: "verify" }
+  - from: "verify"
+    condition:
+      input: "context:verify.tool_responses"
+      routes:
+        "Exit code: 0\nverified\n": "propose"
+        "default_route": "retry_task"
+  - from: "retry_task"
+    condition:
+      input: "context:retry_task.tool_responses"
+      routes:
+        "Exit code: 0\nwrote .codetinder/task.md\n": "rewrite_retry"
+        "default_route": "propose"
+  - { from: "rewrite_retry", to: "save_retry_answer" }
+  - { from: "save_retry_answer", to: "verify_retry" }
+  - { from: "verify_retry", to: "propose" }
+  - { from: "propose", to: "session_log" }
+  # Every sweep step that can't go on hands over to `sweep_propose`, which ends the sweep.
+  - from: "sweep_task"
+    condition:
+      input: "context:sweep_task.tool_responses"
+      routes:
+        "Exit code: 0\nwrote .codetinder/task.md\n": "sweep"
+        "default_route": "sweep_propose"
+  - { from: "sweep", to: "save_sweep_answer" }
+  - { from: "save_sweep_answer", to: "sweep_pick" }
+  # A rejected answer gets one correction; whatever comes of it, `sweep_pick_retry` decides.
+  - from: "sweep_pick"
+    condition:
+      input: "context:sweep_pick.tool_responses"
+      routes:
+        "Exit code: 0\npicked\n": "sweep_rewrite_task"
+        "Exit code: 0\ncorrect\n": "sweep_pick_retry_task"
+        "default_route": "sweep_propose"
+  - from: "sweep_pick_retry_task"
+    condition:
+      input: "context:sweep_pick_retry_task.tool_responses"
+      routes:
+        "Exit code: 0\nwrote .codetinder/task.md\n": "sweep_retry"
+        "default_route": "sweep_pick_retry"
+  - { from: "sweep_retry", to: "save_sweep_pick_retry_answer" }
+  - { from: "save_sweep_pick_retry_answer", to: "sweep_pick_retry" }
+  - from: "sweep_pick_retry"
+    condition:
+      input: "context:sweep_pick_retry.tool_responses"
+      routes:
+        "Exit code: 0\npicked\n": "sweep_rewrite_task"
+        "default_route": "sweep_propose"
+  - from: "sweep_rewrite_task"
+    condition:
+      input: "context:sweep_rewrite_task.tool_responses"
+      routes:
+        "Exit code: 0\nwrote .codetinder/task.md\n": "sweep_rewrite"
+        "default_route": "sweep_propose"
+  - { from: "sweep_rewrite", to: "save_sweep_rewrite_answer" }
+  - { from: "save_sweep_rewrite_answer", to: "sweep_verify" }
+  - from: "sweep_verify"
+    condition:
+      input: "context:sweep_verify.tool_responses"
+      routes:
+        "Exit code: 0\nverified\n": "sweep_propose"
+        "default_route": "sweep_retry_task"
+  - from: "sweep_retry_task"
+    condition:
+      input: "context:sweep_retry_task.tool_responses"
+      routes:
+        "Exit code: 0\nwrote .codetinder/task.md\n": "sweep_rewrite_retry"
+        "default_route": "sweep_propose"
+  - { from: "sweep_rewrite_retry", to: "save_sweep_retry_answer" }
+  - { from: "save_sweep_retry_answer", to: "sweep_verify_retry" }
+  - { from: "sweep_verify_retry", to: "sweep_propose" }
+  - { from: "sweep_propose", to: "session_log" }
+  - { from: "session_log", to: "session_summary" }
+  - { from: "session_summary", to: "end" }
+flow:
+  entry_point: "route"

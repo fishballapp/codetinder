@@ -1,0 +1,117 @@
+name: CI
+
+# Every gate, on every branch. The private monorepo this tree is ejected from pushes each of its
+# pull requests to the branch pr/<number> here, so these run before the private merge; cd.yml calls
+# this workflow again on main before it deploys.
+on:
+  push:
+    branches-ignore: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+# A newer snapshot of a branch supersedes the one under test; main queues behind cd.yml's deploy.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  check:
+    name: Check · typecheck · test · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm check:effect
+      - run: pnpm repojj:check
+      - run: pnpm typecheck
+      # The marketing site's own check: `astro check` for its .astro files, which tsc does not
+      # read, and the route check.
+      - run: pnpm -F @codetinder/site check
+      - run: pnpm test
+      # Every package that has a build, parked ones included, one at a time: three of them build the
+      # site, and two builds of it at once overwrite each other's output.
+      - run: pnpm build
+
+  # The flow runs flow-steps as one downloaded file on its default image's Node 20, with no
+  # node_modules. This job builds that file; flow-steps-node20 is what proves it runs there.
+  flow-steps:
+    name: Build the flow-steps bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -F @codetinder/flow-steps build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: flow-steps
+          path: packages/flow-steps/dist/flow-steps.js
+          if-no-files-found: error
+          retention-days: 1
+
+  # The bundle alone on Node 20: no checkout, no install, no node_modules.
+  flow-steps-node20:
+    name: flow-steps on Node 20
+    needs: flow-steps
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+      - uses: actions/download-artifact@v8
+        with:
+          name: flow-steps
+          path: packages/flow-steps/dist
+      - run: node packages/flow-steps/dist/flow-steps.js --version
+      # Offline: a goal that isn't a route fails in its parse, before any GitLab call. The token
+      # only lets the GitLab layer build; it is never sent. The call is meant to fail, so its
+      # output goes to a file (a pipe would fail under pipefail) and the grep reads it.
+      - name: A goal that is no route fails in its parse
+        run: |
+          node packages/flow-steps/dist/flow-steps.js route > "$RUNNER_TEMP/route.log" 2>&1 || true
+          grep -q 'say what started it' "$RUNNER_TEMP/route.log"
+        env:
+          DUO_WORKFLOW_GOAL: hello
+          GITLAB_TOKEN: offline
+      - run: node packages/flow-steps/dist/flow-steps.js verify --help
+      - run: node packages/flow-steps/dist/flow-steps.js round --help
+      - run: node packages/flow-steps/dist/flow-steps.js task --help
+      - run: node packages/flow-steps/dist/flow-steps.js sweep --help
+      # A flow reaches the internet only through HTTPS_PROXY, so calls must go through it: with an
+      # unreachable proxy, calling GitLab fails on the proxy's port. The context names an opened
+      # merge request, as GitLab's would, so the step gets as far as calling GitLab. The call is
+      # meant to fail, so as above.
+      - name: Calls go through HTTPS_PROXY
+        run: |
+          node packages/flow-steps/dist/flow-steps.js task generate > "$RUNNER_TEMP/task.log" 2>&1 || true
+          grep -q 'ECONNREFUSED 127.0.0.1:9' "$RUNNER_TEMP/task.log"
+        env:
+          DUO_WORKFLOW_ADDITIONAL_CONTEXT_CONTENT: '[{"Category":"agent_platform_trigger_context","Content":"{\"event_type\":\"merge_request\"}"}]'
+          HTTPS_PROXY: http://127.0.0.1:9
+          GITLAB_TOKEN: fake
+          DUO_WORKFLOW_PROJECT_ID: '1'
+          DUO_WORKFLOW_GOAL: '1'
+      # The ES2024+ built-ins the code uses come from the bundle's polyfills.
+      - name: The bundle polyfills the ES2024+ built-ins
+        run: |
+          node --input-type=module -e '
+            process.argv = [process.argv[0], "flow-steps", "--version"];
+            await import("./packages/flow-steps/dist/flow-steps.js");
+            const builtIns = [Map.groupBy, Promise.try, Set.prototype.union, Iterator.prototype.map, RegExp.escape];
+            if (!builtIns.every(f => typeof f === "function")) process.exit(1);
+          '

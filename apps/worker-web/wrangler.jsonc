@@ -1,0 +1,48 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "codetinder-web",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "ef1db00eff7bafcb12e7acb5754d1377",
+  "dev": { "port": 8791, "inspector_port": 9241 },
+  // dist/ is the marketing site (@codetinder/site) and its _headers, put together by
+  // scripts/assemble-assets.ts. Only /api/waitlist runs the Worker. Every other path is a file of
+  // the site or the site's 404 page with status 404: that is how the paths of the earlier product
+  // (/projects, /auth/callback, /rounds/*, /flow-steps/v1.js, the rest of /api/*) are closed.
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/waitlist"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "codetinder",
+      // Pinned to the EU jurisdiction: the waitlist is personal data, and a jurisdiction can only be set when a database is created.
+      "database_id": "aaa8a2d6-b97e-4507-95a1-f20d5aaf7aa9",
+      "migrations_dir": "migrations"
+    }
+  ],
+  // Per client IP (src/http/guards.ts), counted in each Cloudflare location on its own. The
+  // namespace id is unique across the account: two bindings sharing one share their counters.
+  "ratelimits": [
+    {
+      "name": "SIGNUP_LIMIT",
+      "namespace_id": "2001",
+      "simple": { "limit": 5, "period": 60 }
+    }
+  ],
+  // No `placement`: static assets are served from the nearest location whatever the setting, and
+  // the Worker runs for one small D1 write per signup, so moving it next to the database would
+  // only trade the visitor's hop for the database's.
+  // The domains are not declared here: a route would make `wrangler dev` answer every local request
+  // as that host. `scripts/deploy-worker.ts` passes them at deploy (`--domains`).
+  "workers_dev": false,
+  "preview_urls": false,
+  // Workers Logs keep the Worker's own console and error logs. The per-request invocation logs are
+  // off: each records the request's method and URL and "details such as the Request, Response and
+  // related metadata", which the docs do not list, and the waitlist's promise is that no IP address
+  // is kept.
+  "observability": { "enabled": true, "logs": { "invocation_logs": false } }
+}

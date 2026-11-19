@@ -1,0 +1,77 @@
+---
+import { SiteFooter } from '../components/SiteFooter';
+import SiteHeader from '../components/SiteHeader.astro';
+import Layout from '../layouts/Layout.astro';
+
+const UPDATED = '19 November 2026';
+---
+
+<Layout
+  title="Privacy policy · CodeTinder"
+  description="How CodeTinder handles your waitlist data."
+>
+  <div class="relative bg-[radial-gradient(120%_70rem_at_50%_0%,var(--blush-light),var(--blush)_70%)]">
+    <SiteHeader />
+    <main class="mx-auto max-w-[44rem] px-[clamp(1rem,3vw,3rem)] pt-[clamp(1rem,3vw,2.5rem)]">
+      <h1 class="text-center font-display text-[clamp(2.25rem,1.5rem_+_2.5vw,3.75rem)] font-bold leading-[1.05] text-candy-red text-shadow-emboss">
+        Privacy policy
+      </h1>
+      <p class="mt-2 text-center font-semibold text-wine">Last updated: {UPDATED}</p>
+      <article
+        class="mt-[clamp(1.5rem,3vw,2.25rem)] rounded-[2rem] bg-card p-[clamp(1.5rem,4vw,3rem)] text-[1.1rem] leading-[1.6] text-ink shadow-lift [&_a]:font-semibold [&_a]:text-wine [&_a]:underline [&_h2]:mt-8 [&_h2]:font-display [&_h2]:text-[1.6rem] [&_h2]:font-bold [&_h2]:leading-[1.15] [&_h2]:text-candy-red [&_li]:pl-1 [&_li::marker]:text-lipstick [&_p+p]:mt-3 [&_p]:mt-2 [&_ul]:mt-2 [&_ul]:grid [&_ul]:list-disc [&_ul]:gap-1 [&_ul]:pl-5"
+      >
+        <p class="!mt-0">
+          CodeTinder is operated by Fishball Ltd, registered in England and Wales. This policy explains how we handle your data when you join the waitlist.
+        </p>
+
+        <h2>What we collect</h2>
+        <ul>
+          <li>Your email address, as entered.</li>
+          <li>Your optional platform choice.</li>
+          <li>The consent wording shown to you.</li>
+          <li>When you joined the waitlist.</li>
+        </ul>
+        <p>We do not store your IP address or user agent, and we do not write your IP address to logs.</p>
+
+        <h2>How we use it</h2>
+        <p>
+          We use your email to send you one message when CodeTinder is ready. We use your optional platform choice to understand where people want to use it, and keep the consent wording and join time as a record of your consent. Our legal basis for the email is your consent.
+        </p>
+
+        <h2>Cloudflare</h2>
+        <p>
+          Cloudflare sees your IP address as our network provider and uses it for about a minute to count requests and limit excessive signups. See{' '}
+          <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare's privacy policy</a>.
+        </p>
+
+        <h2>Where data is stored</h2>
+        <p>
+          Waitlist data is stored in a Cloudflare D1 database pinned to the European Union.
+        </p>
+
+        <h2>How long we keep it</h2>
+        <p>
+          We keep your data until launch and that one email, or until you ask us to remove it, whichever comes first. To request removal, email <a href="mailto:yo@fishball.app">yo@fishball.app</a>.
+        </p>
+
+        <h2>Cookies and analytics</h2>
+        <p>
+          This site uses no cookies and no analytics.
+        </p>
+
+        <h2>Your rights</h2>
+        <p>
+          Under UK and EU data protection law, you can ask to access, correct or erase your data, withdraw consent, or exercise your other applicable rights. Email{' '}
+          <a href="mailto:yo@fishball.app">yo@fishball.app</a> to make a request. You can also complain to the UK Information Commissioner's Office (ICO).
+        </p>
+
+        <h2>Changes to this policy</h2>
+        <p>If we change this policy, we'll update it here and change the date above.</p>
+
+        <h2>Contact</h2>
+        <p>Fishball Ltd, <a href="mailto:yo@fishball.app">yo@fishball.app</a>.</p>
+      </article>
+    </main>
+    <SiteFooter />
+  </div>
+</Layout>

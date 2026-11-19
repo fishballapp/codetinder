@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "install": "pnpm install --frozen-lockfile",
+  "test": "pnpm typecheck && pnpm test",
+  "proposal": "push",
+  "tone": "mischievous"
+}

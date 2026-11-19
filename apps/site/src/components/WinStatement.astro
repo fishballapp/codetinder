@@ -1,0 +1,29 @@
+---
+import { TrophyIcon } from '@phosphor-icons/react';
+
+const ENTRY_URL = 'https://devpost.com/software/codetinder-swipe-for-the-love-of-code';
+---
+
+<!-- The hackathon win, the news the launch post is about: the two prizes as badges, linking to the entry's page, which lists them. -->
+<a
+  href={ENTRY_URL}
+  class="group mt-[clamp(1.5rem,2.5vw,2rem)] grid justify-items-center gap-2 text-wine no-underline"
+>
+  <span class="flex flex-wrap justify-center gap-2">
+    <span
+      class="inline-flex items-center gap-2 rounded-pill bg-card px-4 py-[0.45rem] text-[1.05rem] font-bold text-ink shadow-card max-sm:px-3 max-sm:text-[0.9rem]"
+    >
+      <TrophyIcon weight="fill" aria-hidden="true" className="size-5 text-lipstick" />
+      Best Supervised Agent
+    </span>
+    <span
+      class="inline-flex items-center gap-2 rounded-pill bg-card px-4 py-[0.45rem] text-[1.05rem] font-bold text-ink shadow-card max-sm:px-3 max-sm:text-[0.9rem]"
+    >
+      <TrophyIcon weight="fill" aria-hidden="true" className="size-5 text-lipstick" />
+      Most Creative
+    </span>
+  </span>
+  <span class="text-[0.95rem] font-semibold group-hover:underline">
+    Winner at the GitLab Transcend hackathon →
+  </span>
+</a>

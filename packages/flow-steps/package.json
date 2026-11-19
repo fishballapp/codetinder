@@ -1,0 +1,33 @@
+{
+  "name": "@codetinder/flow-steps",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "flow-steps": "./dist/flow-steps.js"
+  },
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "check:effect": "effect-tsgo diagnostics --project tsconfig.json --format text"
+  },
+  "dependencies": {
+    "@codetinder/api": "workspace:*",
+    "@codetinder/core": "workspace:*",
+    "@codetinder/gitlab": "workspace:*",
+    "@effect/platform-node": "catalog:",
+    "core-js": "catalog:",
+    "effect": "catalog:",
+    "undici": "catalog:"
+  },
+  "devDependencies": {
+    "@effect/vitest": "catalog:",
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "vitest": "catalog:"
+  }
+}

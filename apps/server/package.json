@@ -1,0 +1,32 @@
+{
+  "name": "@codetinder/server",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/app.ts"
+  },
+  "scripts": {
+    "dev": "pnpm -F @codetinder/flow-steps build && pnpm -F @codetinder/web build && pnpm -F @codetinder/site build && tsdown -c tsdown.dev.config.ts && cp ../../packages/flow-steps/dist/flow-steps.js dist/flow-steps.js && rm -rf dist/web && cp -r ../web/dist dist/web && rm -rf dist/site && cp -r ../site/dist dist/site && cd dist && FLOW_STEPS_PATH=flow-steps.js WEB_DIST_PATH=web SITE_DIST_PATH=site node server-dev.js",
+    "build": "pnpm -F @codetinder/flow-steps build && pnpm -F @codetinder/web build && pnpm -F @codetinder/site build && tsdown && cp ../../packages/flow-steps/dist/flow-steps.js dist/flow-steps.js && rm -rf dist/web && cp -r ../web/dist dist/web && rm -rf dist/site && cp -r ../site/dist dist/site",
+    "test": "vitest run",
+    "check:effect": "effect-tsgo diagnostics --project tsconfig.json --format text"
+  },
+  "dependencies": {
+    "@codetinder/api": "workspace:*",
+    "@codetinder/core": "workspace:*",
+    "@codetinder/flow-steps": "workspace:*",
+    "@codetinder/gitlab": "workspace:*",
+    "@effect/platform-node": "catalog:",
+    "effect": "catalog:",
+    "qrcode": "catalog:"
+  },
+  "devDependencies": {
+    "@effect/vitest": "catalog:",
+    "@types/node": "catalog:",
+    "@types/qrcode": "catalog:",
+    "tsdown": "catalog:",
+    "vitest": "catalog:"
+  }
+}

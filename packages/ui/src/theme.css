@@ -1,0 +1,257 @@
+/*
+ * CodeTinder's design world (Valentine pink, lipstick red, conversation-heart candy), shared by
+ * the marketing site and the app: the fonts, the tokens on :root, mapped into Tailwind's theme so
+ * every utility speaks it (`bg-blush`, `text-wine`, `font-display`, `shadow-card`, `ease-spring`),
+ * the keyframes, and the base layer. Import it after Tailwind, and `@source` this package so its
+ * components' classes are generated:
+ *
+ *   @import "tailwindcss";
+ *   @import "@codetinder/ui/theme.css";
+ *   @source "<path to>/packages/ui/src";
+ */
+@import "@fontsource-variable/fredoka";
+@import "@fontsource-variable/figtree";
+@import "@fontsource-variable/jetbrains-mono";
+
+:root {
+  /* Ground */
+  --blush: #fdcbe0;
+  --blush-light: #fdd9e8;
+  --card: #ffffff;
+  --card-sunk: #f7f6f8;
+
+  /* Love */
+  --lipstick: #e3092d;
+  --lipstick-hover: #c8072a;
+  --candy-red: #d80824;
+  --wine: #a4092c;
+  --hot-pink: #f7175a;
+  --bubblegum: #f75a9e;
+  --petal: #f3a1ba;
+  --petal-soft: #fbd5e3;
+  --petal-wash: #fff5f8;
+
+  /* Ink on white cards */
+  --ink: #141b30;
+  --ink-soft: #4f576f;
+  --ink-faint: #666c80;
+  --rule: #ebe6ec;
+
+  /* Code */
+  --code-keyword: #d6246e;
+  --code-type: #2f4fd1;
+  --code-builtin: #8a3fc2;
+  --code-string: #0d7a5f;
+  --code-comment: #6a6f82;
+
+  /* Diffs: a removed and an added line's ground, the words that changed on it, its sign */
+  --diff-removed: #ffebe9;
+  --diff-removed-word: #ffc5c0;
+  --diff-removed-ink: #a40e26;
+  --diff-added: #e6ffec;
+  --diff-added-word: #aceebb;
+  --diff-added-ink: #116329;
+
+  /* Type */
+  --font-display: "Fredoka Variable", "Fredoka", system-ui, sans-serif;
+  --font-sans: "Figtree Variable", "Figtree", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+
+  /* Shape and depth */
+  --radius-pill: 999px;
+  --shadow-card: 0 18px 40px -18px rgb(164 9 44 / 0.28), 0 4px 12px -4px rgb(164 9 44 / 0.12);
+  --shadow-lift: 0 28px 60px -22px rgb(164 9 44 / 0.4), 0 8px 18px -8px rgb(164 9 44 / 0.18);
+  --shadow-button: 0 10px 22px -10px rgb(227 9 45 / 0.7), 0 2px 4px rgb(164 9 44 / 0.18);
+  /* The candy-red titles' sugary emboss. */
+  --emboss: 0 0.04em 0 #a8061f, 0 0.1em 0.18em rgb(164 9 44 / 0.25);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@theme inline {
+  /* Only the design world's colours: Tailwind's palette would let a stray grey in. */
+  --color-*: initial;
+  --color-white: #fff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-blush: var(--blush);
+  --color-blush-light: var(--blush-light);
+  --color-card: var(--card);
+  --color-card-sunk: var(--card-sunk);
+  --color-lipstick: var(--lipstick);
+  --color-lipstick-hover: var(--lipstick-hover);
+  --color-candy-red: var(--candy-red);
+  --color-wine: var(--wine);
+  --color-hot-pink: var(--hot-pink);
+  --color-bubblegum: var(--bubblegum);
+  --color-petal: var(--petal);
+  --color-petal-soft: var(--petal-soft);
+  --color-petal-wash: var(--petal-wash);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-rule: var(--rule);
+  --color-code-keyword: var(--code-keyword);
+  --color-code-type: var(--code-type);
+  --color-code-builtin: var(--code-builtin);
+  --color-code-string: var(--code-string);
+  --color-code-comment: var(--code-comment);
+  --color-diff-removed: var(--diff-removed);
+  --color-diff-removed-word: var(--diff-removed-word);
+  --color-diff-removed-ink: var(--diff-removed-ink);
+  --color-diff-added: var(--diff-added);
+  --color-diff-added-word: var(--diff-added-word);
+  --color-diff-added-ink: var(--diff-added-ink);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --radius-pill: var(--radius-pill);
+  --shadow-card: var(--shadow-card);
+  --shadow-lift: var(--shadow-lift);
+  --shadow-button: var(--shadow-button);
+  --text-shadow-emboss: var(--emboss);
+
+  --ease-out: var(--ease-out);
+  --ease-spring: var(--ease-spring);
+}
+
+/*
+ * Inline, so the utility carries the value itself and its variables resolve on the element: each
+ * candy sets its own pace and a negative delay (`[--float-duration:5.2s]`), so they drift out of
+ * step.
+ */
+@theme inline {
+  --animate-candy-float: candy-float var(--float-duration, 5s) ease-in-out var(--float-delay, 0s)
+    infinite alternate;
+}
+
+/* The site's motion, one name each: `animate-beat`, `animate-spring-in`, … */
+@theme {
+  --animate-beat: beat 1.1s var(--ease-out) infinite;
+  --animate-beat-once: beat-once 900ms var(--ease-out) 240ms;
+  --animate-arrive: arrive 520ms var(--ease-spring);
+  --animate-spring-in: spring-in 620ms var(--ease-spring) both;
+  --animate-strength-pop: strength-pop 520ms var(--ease-spring);
+  --animate-float: float 5.2s ease-in-out infinite alternate;
+
+  /* A heart that beats, rests, beats: something is on its way. */
+  @keyframes beat {
+    0%,
+    60%,
+    100% {
+      transform: scale(1);
+    }
+    15% {
+      transform: scale(1.12);
+    }
+    30% {
+      transform: scale(0.98);
+    }
+    45% {
+      transform: scale(1.06);
+    }
+  }
+
+  /* One proud beat: it landed. */
+  @keyframes beat-once {
+    15% {
+      transform: scale(1.15);
+    }
+    30% {
+      transform: scale(0.97);
+    }
+    45% {
+      transform: scale(1.07);
+    }
+  }
+
+  @keyframes arrive {
+    from {
+      opacity: 0;
+      transform: translateY(1.5rem) scale(0.94);
+    }
+  }
+
+  @keyframes spring-in {
+    from {
+      opacity: 0;
+      transform: scale(0.4) rotate(-14deg);
+    }
+    40% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes strength-pop {
+    from {
+      transform: scale(0.6);
+      background: var(--hot-pink);
+      color: #fff;
+    }
+  }
+
+  @keyframes float {
+    to {
+      transform: translateY(-0.3rem) rotate(2deg);
+    }
+  }
+
+  @keyframes candy-float {
+    to {
+      translate: 0 -0.3rem;
+    }
+  }
+}
+
+/* The pink ground every page stands on, lighter at the top. */
+@utility bg-page {
+  background-image: radial-gradient(ellipse at top, var(--blush-light), var(--blush) 70%);
+}
+
+@layer base {
+  /* A swiped card flies past the window's edge; that mustn't make the page scroll sideways. With
+     the root's own overflow set, the body's no longer propagates to the viewport, so it clips the
+     card itself; `clip`, not `hidden`, so neither becomes a scroll container. */
+  html,
+  body {
+    overflow-x: clip;
+  }
+
+  body {
+    position: relative;
+    min-height: 100dvh;
+    background: var(--blush);
+    color: var(--wine);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scrollbar-color: var(--petal) var(--blush);
+  }
+
+  a {
+    text-underline-offset: 0.2em;
+  }
+
+  code,
+  pre {
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+  }
+
+  ::selection {
+    background: var(--hot-pink);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--hot-pink);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+}

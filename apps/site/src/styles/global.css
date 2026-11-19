@@ -11,3 +11,13 @@
   --color-background: var(--blush);
   --color-foreground: var(--wine);
 }
+
+/* What the shared cookie banner reads (@internal/cookie-consent): a white card on the pink page,
+   its text in Ink like the site's other cards, its quiet text and hairlines in Ink Soft and Petal.
+   Its background is --card, the design world's white. */
+:root {
+  --foreground: var(--ink);
+  --muted-foreground: var(--ink-soft);
+  --border: var(--petal);
+  --accent: var(--lipstick);
+}

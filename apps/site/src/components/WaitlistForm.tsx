@@ -21,6 +21,13 @@ import {
   WarningCircleIcon,
 } from '@phosphor-icons/react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import {
+  trackWaitlistFailed,
+  trackWaitlistInvalid,
+  trackWaitlistJoined,
+  trackWaitlistSubmitted,
+  type WaitlistFailure,
+} from '../analytics';
 import { CONSENT_TEXT, CURRENT_CONSENT } from '../consent';
 
 const PLATFORM_CHOICES: Record<Platform, { readonly label: string; readonly icon: ReactNode }> = {
@@ -29,10 +36,8 @@ const PLATFORM_CHOICES: Record<Platform, { readonly label: string; readonly icon
   both: { label: 'Both', icon: null },
 };
 
-type Failure = 'rateLimited' | 'refused' | 'unreachable';
-
-const FAILURE_MESSAGES: Record<Failure, string> = {
-  rateLimited: 'Too many signups. Try again in a minute.',
+const FAILURE_MESSAGES: Record<WaitlistFailure, string> = {
+  rate_limited: 'Too many signups. Try again in a minute.',
   refused: 'Check your email address and try again.',
   unreachable: "We couldn't reach the waitlist. Try again.",
 };
@@ -41,7 +46,7 @@ type Status =
   | { readonly kind: 'editing' }
   | { readonly kind: 'sending' }
   | { readonly kind: 'joined'; readonly email: string }
-  | { readonly kind: 'failed'; readonly failure: Failure };
+  | { readonly kind: 'failed'; readonly failure: WaitlistFailure };
 
 /** What is wrong with the address as typed, in the words the field shows; `null` when it's fine. */
 const emailProblem = (value: unknown): string | null => {
@@ -54,7 +59,7 @@ const emailProblem = (value: unknown): string | null => {
 };
 
 /** The waitlist's answer to a join: nothing when it took it, else why not. */
-const join = async (body: Record<string, string>): Promise<Failure | undefined> => {
+const join = async (body: Record<string, string>): Promise<WaitlistFailure | undefined> => {
   try {
     const response = await fetch(WAITLIST_PATH, {
       method: 'POST',
@@ -62,7 +67,7 @@ const join = async (body: Record<string, string>): Promise<Failure | undefined> 
       body: JSON.stringify(body),
     });
     if (response.ok) return undefined;
-    if (response.status === 429) return 'rateLimited';
+    if (response.status === 429) return 'rate_limited';
     if (response.status === 400) return 'refused';
     return 'unreachable';
   } catch {
@@ -73,6 +78,10 @@ const join = async (body: Record<string, string>): Promise<Failure | undefined> 
 /**
  * The waitlist's signup: an email, an optional platform, then the button. Joining
  * answers the same for a new address and one already listed, so the joined state never says which.
+ *
+ * `ph-no-capture` on the form, its field and the joined message keeps PostHog's autocapture off
+ * everything that holds or shows the address: an event whose target or any ancestor has the class
+ * is dropped whole.
  */
 export const WaitlistForm = () => {
   const [email, setEmail] = useState('');
@@ -89,12 +98,18 @@ export const WaitlistForm = () => {
   const submit = async () => {
     const trimmedEmail = email.trim();
     setStatus({ kind: 'sending' });
+    trackWaitlistSubmitted(platform);
     const failure = await join({
       email: trimmedEmail,
       ...(platform === undefined ? {} : { platform }),
       consent: CURRENT_CONSENT,
       [HONEYPOT_FIELD]: honeypotRef.current?.value ?? '',
     });
+    if (failure === undefined) {
+      trackWaitlistJoined(platform);
+    } else {
+      trackWaitlistFailed(failure);
+    }
     setStatus(
       failure === undefined ? { kind: 'joined', email: trimmedEmail } : { kind: 'failed', failure },
     );
@@ -105,7 +120,7 @@ export const WaitlistForm = () => {
       <div
         ref={joinedRef}
         tabIndex={-1}
-        className="mt-6 flex items-center gap-4 rounded-[1.25rem] bg-petal-wash p-5 outline-none"
+        className="ph-no-capture mt-6 flex items-center gap-4 rounded-[1.25rem] bg-petal-wash p-5 outline-none"
       >
         <HeartIcon
           weight="fill"
@@ -126,7 +141,14 @@ export const WaitlistForm = () => {
   }
 
   return (
-    <Form className="mt-5 grid gap-5" onFormSubmit={() => void submit()}>
+    <Form
+      className="ph-no-capture mt-5 grid gap-5"
+      // Before Base UI's own handler, which stops an invalid form and says nothing about it.
+      onSubmitCapture={() => {
+        if (emailProblem(email) !== null) trackWaitlistInvalid();
+      }}
+      onFormSubmit={() => void submit()}
+    >
       <Field.Root name="email" validate={emailProblem} disabled={isSending} className="grid gap-2">
         <Field.Label className="text-[1.05rem] font-semibold text-ink">Email address</Field.Label>
         <Field.Control
@@ -135,7 +157,7 @@ export const WaitlistForm = () => {
           placeholder="you@example.com"
           value={email}
           onValueChange={setEmail}
-          className="w-full rounded-pill border-2 border-petal bg-card px-5 py-[0.8rem] text-[1.15rem] text-ink transition-[border-color,box-shadow] duration-150 placeholder:text-ink-faint focus:border-hot-pink focus:shadow-[0_0_0_4px_rgb(247_23_90/0.18)] focus-visible:outline-none data-[disabled]:border-rule data-[disabled]:bg-card-sunk data-[disabled]:text-ink-soft data-[invalid]:border-lipstick data-[invalid]:bg-petal-wash"
+          className="ph-no-capture w-full rounded-pill border-2 border-petal bg-card px-5 py-[0.8rem] text-[1.15rem] text-ink transition-[border-color,box-shadow] duration-150 placeholder:text-ink-faint focus:border-hot-pink focus:shadow-[0_0_0_4px_rgb(247_23_90/0.18)] focus-visible:outline-none data-[disabled]:border-rule data-[disabled]:bg-card-sunk data-[disabled]:text-ink-soft data-[invalid]:border-lipstick data-[invalid]:bg-petal-wash"
         />
         <Field.Error className="flex items-center gap-2 text-[1rem] font-semibold text-wine [&_svg]:size-[1.15em] [&_svg]:flex-none [&_svg]:text-lipstick">
           <WarningCircleIcon weight="fill" aria-hidden="true" />

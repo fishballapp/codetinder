@@ -33,7 +33,10 @@ export const DemoFinale = ({
           </>
         )}
       </p>
-      <WaitlistLink className="mt-[0.4em] gap-[0.4em] px-[1.4em] py-[0.7em] text-[0.95em]" />
+      <WaitlistLink
+        placement="demo_finale"
+        className="mt-[0.4em] gap-[0.4em] px-[1.4em] py-[0.7em] text-[0.95em]"
+      />
       <button
         type="button"
         className="cursor-pointer p-[0.2em] text-[0.85em] font-semibold text-ink-soft underline underline-offset-[0.2em]"

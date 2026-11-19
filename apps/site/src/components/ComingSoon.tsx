@@ -15,7 +15,10 @@ export const ComingSoon = () => (
       >
         Coming soon to GitHub and GitLab
       </h2>
-      <WaitlistLink className="mt-6 gap-[0.6rem] px-9 py-[0.95rem] text-[1.3rem]" />
+      <WaitlistLink
+        placement="closing"
+        className="mt-6 gap-[0.6rem] px-9 py-[0.95rem] text-[1.3rem]"
+      />
     </section>
   </div>
 );

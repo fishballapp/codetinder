@@ -22,7 +22,8 @@ version ourselves. So CodeTinder is closed for now. What is live is a **waitlist
 [codetinder.dev](https://codetinder.dev): leave an email address, and say whether you keep your
 code on GitHub, GitLab or both, to hear when it comes back. We store the address, your platform
 choice, the wording you agreed to and when you joined, nothing else, and we send no confirmation
-email.
+email. The site counts visits with PostHog, behind a cookie banner, to see which links bring people
+to it; the address you type is never sent to PostHog.
 
 The next version runs as an ordinary CI job on **GitHub and GitLab**, on any plan, built from the
 code in this repository. Coming soon.

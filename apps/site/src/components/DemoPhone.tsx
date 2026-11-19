@@ -15,6 +15,7 @@ import {
   WifiHighIcon,
 } from '@phosphor-icons/react';
 import { useEffect, useRef, useState } from 'react';
+import { trackDemoFinished, trackDemoSwiped } from '../analytics';
 import { DemoFinale } from './DemoFinale';
 import { DEMO_ROUND } from './demoRound';
 
@@ -65,11 +66,17 @@ export const DemoPhone = ({
 
   const onSwipe = (item: DemoCard, verdict: Verdict, place: DOMRect) => {
     if (item.kind !== 'change') return;
+    trackDemoSwiped(verdict);
     setSwipedCount(count => count + 1);
     onVerdict(item.card, verdict, place);
   };
 
   const finish = () => setSwipedCount(DEMO_ROUND.cards.length);
+
+  // The last card is reached by the last swipe or by Done, once a play-through.
+  useEffect(() => {
+    if (isFinished) trackDemoFinished();
+  }, [isFinished]);
 
   // Until the visitor's pointer is on the phone, the top card sways between like and nope to
   // show it can be swiped; it never swipes itself, so every swipe in the demo is the visitor's.

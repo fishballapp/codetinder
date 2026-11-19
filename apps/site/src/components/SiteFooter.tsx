@@ -10,10 +10,13 @@ export const SiteFooter = () => (
     <p className="text-balance">
       Made with love by Fishball Ltd for the GitLab Transcend hackathon.
     </p>
-    <p className="flex flex-wrap justify-center gap-x-5 gap-y-2 font-semibold [&_a]:underline">
+    <p className="flex flex-wrap justify-center gap-x-5 gap-y-2 font-semibold [&_:is(a,button)]:underline">
       <a href={HACKATHON_RESULTS_URL}>Hackathon entry</a>
       <a href={SOURCE_URL}>Source code</a>
       <a href="/privacy">Privacy</a>
+      <button type="button" data-cookie-settings className="cursor-pointer">
+        Cookie settings
+      </button>
     </p>
   </footer>
 );

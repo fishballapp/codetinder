@@ -1,7 +1,8 @@
 ---
-// Every page's head, from the shared marketing shell: the one without analytics, as the site has
-// none and sets no cookies (the privacy page says so).
-import PageShell from '@internal/marketing/PageShell.astro';
+// Every page's head, from the shared marketing layout: the head, PostHog and its consent banner.
+// Visits are counted by the site's own PostHog project; what is sent and what never is lives in
+// `src/analytics.ts`.
+import MarketingLayout from '@internal/marketing/Layout.astro';
 import '../styles/global.css';
 
 type Props = {
@@ -10,10 +11,13 @@ type Props = {
   readonly structuredData?: Record<string, unknown>;
 };
 
+// The public key of the site's own PostHog project (codetinder.dev); safe to commit.
+const POSTHOG_API_KEY = 'phc_yxG5MFtmK3Mptsk2ExoaNVypKWxHqqCcVGghBa9hQfHh';
+
 const { title, description, structuredData } = Astro.props;
 ---
 
-<PageShell
+<MarketingLayout
   title={title}
   description={description}
   ogSiteName="CodeTinder"
@@ -28,7 +32,20 @@ const { title, description, structuredData } = Astro.props;
   fontHref={null}
   icons={[{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]}
   structuredData={structuredData}
+  posthogApiKey={POSTHOG_API_KEY}
+  privacyPolicyHref="/privacy"
 >
   <link slot="head" rel="sitemap" href="/sitemap-index.xml" />
   <slot />
-</PageShell>
+
+  {/* Bundled, not is:inline, so it can import the analytics. One listener for every link that jumps to the signup card. */}
+  <script>
+    import { trackWaitlistCtaClick } from '../analytics';
+
+    document.addEventListener('click', event => {
+      if (!(event.target instanceof Element)) return;
+      const link = event.target.closest<HTMLAnchorElement>('a[data-waitlist-cta]');
+      if (link !== null) trackWaitlistCtaClick(link.dataset.waitlistCta);
+    });
+  </script>
+</MarketingLayout>

@@ -9,8 +9,9 @@ by CI, but nothing deploys it, and it is the reference the next version is built
 
 ```
 visitor ──▶ codetinder.dev ──▶ Cloudflare Worker `codetinder-web`
-                                  ├─ static assets: the Astro site (apps/site)
-                                  └─ POST /api/waitlist ──▶ D1 database `codetinder`
+   │                              ├─ static assets: the Astro site (apps/site)
+   │                              └─ POST /api/waitlist ──▶ D1 database `codetinder`
+   └─ the page's script ──▶ PostHog (EU cloud): page views and events, never the email address
 ```
 
 - **One Worker, `codetinder-web`** (`apps/worker-web`). The site is its static assets; only
@@ -23,6 +24,16 @@ visitor ──▶ codetinder.dev ──▶ Cloudflare Worker `codetinder-web`
   email pattern, the platforms, the consent wording ids, the hidden field's name) and ships no
   Effect runtime. The site shares `packages/core` and `packages/ui` with the parked app.
   `apps/worker-web/scripts/assemble-assets.ts` puts the build and its `_headers` into `dist/`.
+- **Analytics** are PostHog's, in the project of the site's own, on its EU cloud. The shared
+  marketing layout (`@internal/marketing`) puts PostHog's snippet and the consent banner
+  (`@internal/cookie-consent`) on every page: until a visitor chooses, visits are counted without
+  cookies or browser storage; Accept sets PostHog's cookie; Reject keeps the cookieless counting.
+  Session replay is off. The site sends page views (with referrer and UTM tags) and a short list of
+  events, each with a property from a closed list (`apps/site/src/analytics.ts`): the signup
+  links clicked, the form's outcomes with the platform picked, and the demo's swipes. The visitor's
+  email address is never sent: no property, no identify, and `ph-no-capture` on the signup card keeps
+  PostHog's autocapture off it. The Worker has no part in it, and its `_headers` set no
+  `script-src` or `connect-src`, so PostHog's script and requests are allowed.
 - **The endpoint** is declared once as an Effect `HttpApi` (`packages/api`, `waitlist.ts`) and
   implemented in `apps/worker-web`. A request is `{ email, consent, platform?, website? }`:
   `platform` is `github`, `gitlab` or `both`; `consent` is the id of the wording the visitor saw.

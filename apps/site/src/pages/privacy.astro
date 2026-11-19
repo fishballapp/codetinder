@@ -8,7 +8,7 @@ const UPDATED = '19 November 2026';
 
 <Layout
   title="Privacy policy · CodeTinder"
-  description="How CodeTinder handles your waitlist data."
+  description="How CodeTinder handles your waitlist data and counts visits to this site."
 >
   <div class="relative bg-[radial-gradient(120%_70rem_at_50%_0%,var(--blush-light),var(--blush)_70%)]">
     <SiteHeader />
@@ -21,7 +21,7 @@ const UPDATED = '19 November 2026';
         class="mt-[clamp(1.5rem,3vw,2.25rem)] rounded-[2rem] bg-card p-[clamp(1.5rem,4vw,3rem)] text-[1.1rem] leading-[1.6] text-ink shadow-lift [&_a]:font-semibold [&_a]:text-wine [&_a]:underline [&_h2]:mt-8 [&_h2]:font-display [&_h2]:text-[1.6rem] [&_h2]:font-bold [&_h2]:leading-[1.15] [&_h2]:text-candy-red [&_li]:pl-1 [&_li::marker]:text-lipstick [&_p+p]:mt-3 [&_p]:mt-2 [&_ul]:mt-2 [&_ul]:grid [&_ul]:list-disc [&_ul]:gap-1 [&_ul]:pl-5"
       >
         <p class="!mt-0">
-          CodeTinder is operated by Fishball Ltd, registered in England and Wales. This policy explains how we handle your data when you join the waitlist.
+          CodeTinder is operated by Fishball Ltd, registered in England and Wales. This policy explains how we handle your data when you join the waitlist, and how this site counts visits.
         </p>
 
         <h2>What we collect</h2>
@@ -31,11 +31,14 @@ const UPDATED = '19 November 2026';
           <li>The consent wording shown to you.</li>
           <li>When you joined the waitlist.</li>
         </ul>
-        <p>We do not store your IP address or user agent, and we do not write your IP address to logs.</p>
+        <p>The waitlist does not store your IP address or user agent, and we do not write your IP address to logs. Counting visits is separate: see Cookies and analytics below.</p>
 
         <h2>How we use it</h2>
         <p>
           We use your email to send you one message when CodeTinder is ready. We use your optional platform choice to understand where people want to use it, and keep the consent wording and join time as a record of your consent. Our legal basis for the email is your consent.
+        </p>
+        <p>
+          We use the visit counts to see which links bring people to CodeTinder and which of them join the waitlist. Our legal basis for PostHog's cookie is your consent. Our legal basis for counting visits without cookies is our legitimate interest in seeing how people find CodeTinder, and you can object at any time by emailing <a href="mailto:yo@fishball.app">yo@fishball.app</a>.
         </p>
 
         <h2>Cloudflare</h2>
@@ -44,19 +47,33 @@ const UPDATED = '19 November 2026';
           <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare's privacy policy</a>.
         </p>
 
+        <h2>PostHog</h2>
+        <p>
+          PostHog counts visits to this site on its EU servers, as our service provider. It receives your IP address with each visit, as any server does. Our project is set to discard it, so PostHog does not store it. See <a href="https://posthog.com/privacy">PostHog's privacy policy</a>.
+        </p>
+
         <h2>Where data is stored</h2>
         <p>
-          Waitlist data is stored in a Cloudflare D1 database pinned to the European Union.
+          Waitlist data is stored in a Cloudflare D1 database pinned to the European Union. Visit counts are stored by PostHog on its EU servers.
         </p>
 
         <h2>How long we keep it</h2>
         <p>
-          We keep your data until launch and that one email, or until you ask us to remove it, whichever comes first. To request removal, email <a href="mailto:yo@fishball.app">yo@fishball.app</a>.
+          We keep your waitlist data until launch and that one email, or until you ask us to remove it, whichever comes first. To request removal, email <a href="mailto:yo@fishball.app">yo@fishball.app</a>.
         </p>
 
         <h2>Cookies and analytics</h2>
         <p>
-          This site uses no cookies and no analytics.
+          <strong>Analytics.</strong> This site counts visits, where they came from and which buttons are pressed, with <a href="https://posthog.com/privacy">PostHog</a> on its EU servers, so we can see how people find CodeTinder. That includes the demo's swipes, and whether the waitlist took a signup and which platform you picked.
+        </p>
+        <ul>
+          <li>Until you choose, it counts your visit anonymously, without cookies.</li>
+          <li>Accept, and PostHog sets a cookie so it can tell a returning visitor from a new one.</li>
+          <li>Reject, and it keeps counting anonymously, without cookies.</li>
+          <li>Change your mind any time with Cookie settings, at the bottom of the page.</li>
+        </ul>
+        <p>
+          The email address you type into the waitlist form is never sent to PostHog. Whichever you choose, your choice is kept in your browser's local storage, so the banner doesn't ask again.
         </p>
 
         <h2>Your rights</h2>

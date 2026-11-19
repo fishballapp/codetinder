@@ -1,6 +1,11 @@
 ---
 import { Wordmark } from '@codetinder/ui/react';
 import { HeartIcon } from '@phosphor-icons/react';
+
+// On the landing page a link to one of its sections stays in the document, so the visit's UTM tags
+// stay in its URL for every event after the click; from another page it goes there.
+const isLanding = Astro.url.pathname.replace(/\.html$/, '').replace(/\/index$/, '/') === '/';
+const sectionHref = (id: string) => (isLanding ? `#${id}` : `/#${id}`);
 ---
 
 <header
@@ -10,11 +15,12 @@ import { HeartIcon } from '@phosphor-icons/react';
     <Wordmark />
   </a>
   <nav class="flex items-center gap-[clamp(1rem,2.5vw,2.25rem)]">
-    <a href="/#how-it-works" class="text-[1.15rem] font-semibold text-wine hover:underline max-sm:hidden">
+    <a href={sectionHref('how-it-works')} class="text-[1.15rem] font-semibold text-wine hover:underline max-sm:hidden">
       How it works
     </a>
     <a
-      href="/#join"
+      href={sectionHref('join')}
+      data-waitlist-cta="nav"
       class="inline-flex items-center gap-[0.6rem] whitespace-nowrap rounded-[0.9rem] bg-lipstick px-6 py-[0.8rem] text-[1.1rem] font-semibold text-white shadow-button transition-[background-color] duration-[160ms] ease-out hover:bg-lipstick-hover max-sm:px-[0.9rem] max-sm:py-[0.6rem] max-sm:text-[0.95rem]"
     >
       <HeartIcon weight="fill" aria-hidden="true" className="size-5 text-[#ffd9e2] max-[24rem]:hidden" />

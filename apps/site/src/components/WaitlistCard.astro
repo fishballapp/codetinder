@@ -3,11 +3,11 @@ import { HourglassMediumIcon } from '@phosphor-icons/react';
 import { WaitlistForm } from './WaitlistForm';
 ---
 
-<!-- The page's one action: what's true today, then the form. -->
+<!-- The page's one action: what's true today, then the form. ph-no-capture: PostHog's autocapture records nothing from this card, where the visitor types and sees their address. -->
 <section
   id="join"
   aria-labelledby="join-title"
-  class="relative mt-[clamp(1.5rem,2.5vw,2.25rem)] w-full max-w-[40rem] scroll-mt-6 rounded-[2rem] bg-card p-[clamp(1.25rem,3vw,2rem)] text-left text-ink shadow-lift"
+  class="ph-no-capture relative mt-[clamp(1.5rem,2.5vw,2.25rem)] w-full max-w-[40rem] scroll-mt-6 rounded-[2rem] bg-card p-[clamp(1.25rem,3vw,2rem)] text-left text-ink shadow-lift"
 >
   <p
     class="inline-flex items-center gap-[0.4rem] rounded-pill border border-petal bg-petal-wash px-3 py-1 text-[0.95rem] font-semibold text-wine"

@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import secretKeys from './secret-keys.json' with { type: 'json' };
 
 /** The Worker's custom domains: a deploy attaches these and detaches any other. */
-const DOMAINS = ['next.codetinder.dev'];
+const DOMAINS = ['codetinder.dev', 'next.codetinder.dev'];
 
 const SECRET_KEYS: readonly string[] = secretKeys;
 
